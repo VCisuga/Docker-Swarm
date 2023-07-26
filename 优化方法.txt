@@ -1,0 +1,42 @@
+更新docker 
+sudo apt-get update
+sudo apt-get remove docker docker-engine docker.io
+sudo wget -qO- https://get.docker.com/ | sh
+sudo systemctl enable docker  
+sudo systemctl is-enabled docker
+sudo systemctl status docker
+
+Docker的网络和存储驱动程序，以及Docker的日志记录和监控功能
+1、使用Docker的网络驱动程序：您可以使用Docker的网络驱动程序为Docker容器创建自定义网络。例如，您可以使用以下命令为Docker容器创建一个overlay网络：
+docker network create -d overlay my-network
+
+然后，您可以使用以下命令将服务连接到该网络：  
+docker service update --network-mode my-network my-service
+
+2、使用Docker的存储驱动程序：您可以使用Docker的存储驱动程序为Docker容器创建自定义存储。例如，您可以使用以下命令为Docker容器创建一个devicemapper存储：
+docker plugin install --grant-all-permissions plugin_name
+docker volume create --driver plugin_name --opt device=/dev/sdb --opt size=10GB my-volume
+
+然后，您可以使用以下命令将服务连接到该存储：  
+docker service update --mount type=volume,volume-driver=plugin_name,source=my-volume,destination=/data my-service
+
+3、使用Docker的日志记录：您可以使用Docker的日志记录功能收集和管理Docker容器的日志。例如，您可以使用以下命令将Docker容器的日志发送到syslog服务器：
+docker service update --log-driver syslog --log-opt syslog-address=udp://localhost:514 my-service
+
+4. 使用Docker的监控：您可以使用Docker的监控功能监视Docker容器的性能。例如，您可以使用以下命令监视Docker容器的CPU和内存使用率：  
+  
+   ```shell  
+docker service update --monitor-interval=10s --monitor="cpu.percent>=5,mem.usage>=$mem_limit" my-service
+这将监视my-service服务的CPU使用率，并在CPU使用率超过5％时发出警报。它还将监视my-service服务的内存使用率，并在内存使用率超过指定的内存限制时发出警报。
+
+负载均衡：
+a. 使用内置负载均衡器：
+docker service create --name my-service --replicas 5 --update-delay 10s --update-parallelism 1 --load-balance-mode roundrobin my-image
+b. 使用 Docker Router 和 external LB
+docker service create --name my-service --replicas 5 --update-delay 10s --update-parallelism 1 --load-balancer kind=swarm --mode global my-image
+
+滚动更新：
+docker service update --image my-image:newversion my-service
+
+自动扩展：
+docker service create --name my-service --replicas 5 --update-delay 10s --update-parallelism 1 --autoscaling-config={"maxReplicas": 10,"minReplicas": 1,"target": 50,"replicas": 1}my-image

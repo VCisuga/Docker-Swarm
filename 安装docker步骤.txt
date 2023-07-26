@@ -1,0 +1,149 @@
+2.设置Root用户登录，并切换用户
+设置root密码：
+sudo passwd root
+Install Docker Engine on Ubuntu | Docker Documentation
+1.在 Ubuntu 上安装 Docker 引擎
+卸载所有冲突的软件包：
+for pkg in docker.io docker-doc docker-compose podman-docker containerd runc; do sudo apt-get remove $pkg; done
+
+更新软件包索引并安装软件包以允许使用 基于 HTTPS 的存储库：
+sudo apt-get update
+sudo apt-get install ca-certificates curl gnupg
+
+添加 Docker 的官方 GPG 密钥：
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+使用以下命令设置存储库：
+echo \
+  "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+更新包索引：apt
+sudo apt-get update
+
+安装 Docker Engine、containerd 和 Docker Compose：
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+通过运行映像验证 Docker 引擎安装是否成功。hello-world：
+sudo docker run hello-world
+
+安装最新版docker-ce
+sudo apt-get install docker-ce
+
+设置开机自启动并启动docker
+sudo systemctl enable docker
+sudo systemctl start docker
+
+3.换docker源：docker配置远程访问和阿里云镜像
+配置阿里云镜像：
+vim /etc/docker/daemon.json
+
+添加以下内容：
+{
+ "exec-opts": ["native.cgroupdriver=systemd"],
+ "registry-mirrors": ["https://80vp5b3e.mirror.aliyuncs.com"]
+}
+
+重启docker：
+systemctl daemon-reload
+systemctl restart docker
+
+
+安装pip
+sudo apt install python3-pip
+更新库
+sudo apt-get update
+
+4.搭建虚拟环境
+在根目录下：
+python3.10 –version
+sudo apt update  
+sudo apt-get install python3-venv
+sudo apt install docker-ce docker-ce-cli containerd.io docker-compose
+python3.10 -m venv myenv
+
+source myenv/bin/activate
+deactivate
+
+sudo apt update  
+sudo apt install docker-ce docker-ce-cli containerd.io docker-compose
+
+docker build -t myenv .
+
+pip3 install --upgrade pip -i https://mirrors.aliyun.com/pypi/simple/
+# pip3 install --user --upgrade pip
+
+更新pip（一定要更新，不然后面建立容器项目会报错）
+pip3 install --upgrade pip
+
+安装docker-compose
+pip3 install docker-compose
+
+5. 搭建分布式环境：
+
+vim docker-compose.yml
+
+version: '3'  
+  
+networks:  
+  tf-network:  
+    driver: bridge  
+  
+services:  
+  tf-master:  
+    image: tensorflow/tensorflow:latest-gpu  
+    command: >  
+      sh -c "export CUDA_SO=/usr/local/lib/libcuda.so && python -m venv venv && source venv/bin/activate && python -m ipykernel_launcher --profiledir .kernel-profile --cmdprefix env LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64 --ip y --transport=ipc --kernel-name=kernel-xxxxxxxxxxxxxxxx --shell-name=xterm --user-name=jovyan --env=JUPYTER_ENABLE_LAB=yes jupyter notebook --no-browser --NotebookApp.token='' --NotebookApp.password='' --ip 0.0.0.0 --port 8888"  
+    volumes:  
+      - ./notebooks:/notebooks  
+    depends_on:  
+      - tf-ps  
+      - tf-worker  
+    networks:  
+      - tf-network  
+  
+  tf-ps:  
+    image: tensorflow/tensorflow:latest-gpu  
+    command: >  
+      sh -c "export CUDA_SO=/usr/local/lib/libcuda.so && python -m venv venv && source venv/bin/activate && python -m ipykernel_launcher --profiledir .kernel-profile --cmdprefix env LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64 --ip y --transport=ipc --kernel-name=kernel-xxxxxxxxxxxxxxxx --shell-name=xterm --user-name=jovyan --env=JUPYTER_ENABLE_LAB=yes jupyter notebook --no-browser --NotebookApp.token='' --NotebookApp.password='' --ip 0.0.0.0 --port 8889"  
+    volumes:  
+      - ./notebooks:/notebooks  
+    networks:  
+      - tf-network  
+  
+  tf-worker:  
+    image: tensorflow/tensorflow:latest-gpu  
+    command: >  
+      sh -c "export CUDA_SO=/usr/local/lib/libcuda.so && python -m venv venv && source venv/bin/activate && python -m ipykernel_launcher --profiledir .kernel-profile --cmdprefix env LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64 --ip y --transport=ipc --kernel-name=kernel-xxxxxxxxxxxxxxxx --shell-name=xterm --user-name=jovyan --env=JUPYTER_ENABLE_LAB=yes jupyter notebook --no-browser --NotebookApp.token='' --NotebookApp.password='' --ip 0.0.0.0 --port 8890"  
+    volumes:  
+      - ./notebooks:/notebooks  
+    networks:  
+      - tf-network  
+  
+  my-jupyter-notebook:  
+    image: jupyter/scipy-notebook  
+    environment:  
+      PASSWORD: '12345678'  
+    command: jupyter lab --ip 0.0.0.0 --port 8888 --no-browser --NotebookApp.token='' --NotebookApp.password=''  
+    volumes:  
+      - ./notebooks:/notebooks  
+    networks:  
+      - tf-network
+①使用snap安装docker：snap install docker # version 20.10.24
+②使用apt安装docker-compose：apt  install docker-compose  # version 1.29.2-1
+③docker-compose up -d
+
+source myenv/bin/activate
+source youenv/bin/activate
+vim Dockerfile
+docker exec -it {container_id} bash
+jupyter notebook
+docker run -it --rm -p 8888:8888 jupyter/datascience-notebook
+
+vim docker-compose.yml
+docker-compose up -d
+
+
